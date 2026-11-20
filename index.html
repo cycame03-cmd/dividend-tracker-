@@ -430,20 +430,20 @@
   </main>
 
   <script>
-    // Initial Stock Metadata & Default Data (Updated to actual current market prices)
+    // Initial Stock Metadata & Default Data (Matched 100% to your Google Sheet)
     const stockMeta = {
-      "O": { name: "리얼티인컴 (O)", color: "#2563eb", price: 59.04, avgPrice: 55.00 },
-      "SCHD": { name: "슈드 (SCHD)", color: "#10b981", price: 28.10, avgPrice: 27.50 },
-      "MSFT": { name: "마이크로소프트 (MSFT)", color: "#f59e0b", price: 415.20, avgPrice: 310.00 },
-      "SRET": { name: "스렛 (SRET)", color: "#ef4444", price: 8.45, avgPrice: 9.50 },
-      "DIS": { name: "디즈니 (DIS)", color: "#8b5cf6", price: 112.30, avgPrice: 105.00 },
-      "TLT": { name: "미국장기국채 (TLT)", color: "#ec4899", price: 92.15, avgPrice: 92.00 },
-      "JEPQ": { name: "JP모건 나스닥100 (JEPQ)", color: "#06b6d4", price: 54.80, avgPrice: 53.50 }
+      "O": { name: "리얼티인컴 (O)", color: "#2563eb", price: 59.04, avgPrice: 62.14 },
+      "SCHD": { name: "슈드 (SCHD)", color: "#10b981", price: 28.10, avgPrice: 27.8695 },
+      "MSFT": { name: "마이크로소프트 (MSFT)", color: "#f59e0b", price: 415.20, avgPrice: 213.72 },
+      "SRET": { name: "스렛 (SRET)", color: "#ef4444", price: 8.45, avgPrice: 27.4939 },
+      "DIS": { name: "디즈니 (DIS)", color: "#8b5cf6", price: 112.30, avgPrice: 132.5937 },
+      "TLT": { name: "미국장기국채 (TLT)", color: "#ec4899", price: 92.15, avgPrice: 88.1927 },
+      "JEPQ": { name: "JP모건 나스닥100 (JEPQ)", color: "#06b6d4", price: 54.80, avgPrice: 57.8605 }
     };
 
     const years = [2021, 2022, 2023, 2024, 2025, 2026];
 
-    // EXACT GOOGLE SHEET DATA (Dividend records per year)
+    // EXACT GOOGLE SHEET DATA (Dividend records per year - Total: $1,331.32)
     const exactSheetDividendRecords = [
       { id: 1, date: "2021-12-31", ticker: "O", amount: 26.89 },
       { id: 2, date: "2022-12-31", ticker: "O", amount: 110.97 },
@@ -471,7 +471,7 @@
       { id: 21, date: "2023-12-31", ticker: "SRET", amount: 80.99 },
       { id: 22, date: "2024-12-31", ticker: "SRET", amount: 87.23 },
       { id: 23, date: "2025-12-31", ticker: "SRET", amount: 89.05 },
-      { id: 24, date: "2026-03-31", ticker: "SRET", amount: 53.94 },
+      { id: 24, date: "2026-03-31", ticker: "SRET", amount: 53.23 },
 
       { id: 25, date: "2024-12-31", ticker: "DIS", amount: 7.39 },
       { id: 26, date: "2025-12-31", ticker: "DIS", amount: 10.20 },
@@ -480,39 +480,39 @@
       { id: 28, date: "2025-12-31", ticker: "TLT", amount: 1.01 },
       { id: 29, date: "2026-03-31", ticker: "TLT", amount: 23.16 },
 
-      { id: 30, date: "2026-03-31", ticker: "JEPQ", amount: 23.39 }
+      { id: 30, date: "2026-03-31", ticker: "JEPQ", amount: 29.38 }
     ];
 
-    // EXACT GOOGLE SHEET TRANSACTIONS (Shares per year)
+    // EXACT GOOGLE SHEET TRANSACTIONS (Shares & Avg Price - Total Investment: $13,153.79)
     const exactSheetTransactions = [
-      { id: 101, date: "2021-01-15", ticker: "O", type: "BUY", shares: 44, price: 55.00 },
-      { id: 102, date: "2023-05-10", ticker: "O", type: "BUY", shares: 1, price: 55.00 },
-      { id: 103, date: "2024-06-20", ticker: "O", type: "BUY", shares: 24, price: 55.00 },
-      { id: 104, date: "2025-04-12", ticker: "O", type: "BUY", shares: 3, price: 55.00 },
-      { id: 105, date: "2026-01-10", ticker: "O", type: "BUY", shares: 4, price: 55.00 },
+      { id: 101, date: "2021-01-15", ticker: "O", type: "BUY", shares: 44, price: 62.14 },
+      { id: 102, date: "2023-05-10", ticker: "O", type: "BUY", shares: 1, price: 62.14 },
+      { id: 103, date: "2024-06-20", ticker: "O", type: "BUY", shares: 24, price: 62.14 },
+      { id: 104, date: "2025-04-12", ticker: "O", type: "BUY", shares: 3, price: 62.14 },
+      { id: 105, date: "2026-01-10", ticker: "O", type: "BUY", shares: 4, price: 62.14 },
 
-      { id: 106, date: "2022-02-10", ticker: "SCHD", type: "BUY", shares: 1, price: 27.50 },
-      { id: 107, date: "2023-04-15", ticker: "SCHD", type: "BUY", shares: 2, price: 27.50 },
-      { id: 108, date: "2024-03-20", ticker: "SCHD", type: "BUY", shares: 12, price: 27.50 },
-      { id: 109, date: "2025-05-18", ticker: "SCHD", type: "BUY", shares: 70, price: 27.50 },
-      { id: 110, date: "2026-02-05", ticker: "SCHD", type: "BUY", shares: 38, price: 27.50 },
+      { id: 106, date: "2022-02-10", ticker: "SCHD", type: "BUY", shares: 1, price: 27.8695 },
+      { id: 107, date: "2023-04-15", ticker: "SCHD", type: "BUY", shares: 2, price: 27.8695 },
+      { id: 108, date: "2024-03-20", ticker: "SCHD", type: "BUY", shares: 12, price: 27.8695 },
+      { id: 109, date: "2025-05-18", ticker: "SCHD", type: "BUY", shares: 70, price: 27.8695 },
+      { id: 110, date: "2026-02-05", ticker: "SCHD", type: "BUY", shares: 38, price: 27.8695 },
 
-      { id: 111, date: "2021-03-01", ticker: "MSFT", type: "BUY", shares: 1, price: 310.00 },
+      { id: 111, date: "2021-03-01", ticker: "MSFT", type: "BUY", shares: 1, price: 213.72 },
 
-      { id: 112, date: "2021-04-10", ticker: "SRET", type: "BUY", shares: 142, price: 9.50 },
-      { id: 113, date: "2022-07-15", ticker: "SRET", type: "BUY", shares: 37, price: 9.50 },
-      { id: 114, date: "2023-11-20", ticker: "SRET", type: "SELL", shares: 120, price: 9.50 },
-      { id: 115, date: "2024-08-05", ticker: "SRET", type: "BUY", shares: 1, price: 9.50 },
+      { id: 112, date: "2021-04-10", ticker: "SRET", type: "BUY", shares: 142, price: 27.4939 },
+      { id: 113, date: "2022-07-15", ticker: "SRET", type: "BUY", shares: 37, price: 27.4939 },
+      { id: 114, date: "2023-11-20", ticker: "SRET", type: "SELL", shares: 120, price: 27.4939 },
+      { id: 115, date: "2024-08-05", ticker: "SRET", type: "BUY", shares: 1, price: 27.4939 },
 
-      { id: 116, date: "2021-05-12", ticker: "DIS", type: "BUY", shares: 7, price: 105.00 },
-      { id: 117, date: "2022-06-18", ticker: "DIS", type: "BUY", shares: 3, price: 105.00 },
-      { id: 118, date: "2023-08-22", ticker: "DIS", type: "BUY", shares: 1, price: 105.00 },
-      { id: 119, date: "2024-09-10", ticker: "DIS", type: "BUY", shares: 1, price: 105.00 },
+      { id: 116, date: "2021-05-12", ticker: "DIS", type: "BUY", shares: 7, price: 132.5937 },
+      { id: 117, date: "2022-06-18", ticker: "DIS", type: "BUY", shares: 3, price: 132.5937 },
+      { id: 118, date: "2023-08-22", ticker: "DIS", type: "BUY", shares: 1, price: 132.5937 },
+      { id: 119, date: "2024-09-10", ticker: "DIS", type: "BUY", shares: 1, price: 132.5937 },
 
-      { id: 120, date: "2025-02-14", ticker: "TLT", type: "BUY", shares: 2, price: 92.00 },
-      { id: 121, date: "2026-01-20", ticker: "TLT", type: "BUY", shares: 9, price: 92.00 },
+      { id: 120, date: "2025-02-14", ticker: "TLT", type: "BUY", shares: 2, price: 88.1927 },
+      { id: 121, date: "2026-01-20", ticker: "TLT", type: "BUY", shares: 9, price: 88.1927 },
 
-      { id: 122, date: "2026-01-25", ticker: "JEPQ", type: "BUY", shares: 10, price: 53.50 }
+      { id: 122, date: "2026-01-25", ticker: "JEPQ", type: "BUY", shares: 10, price: 57.8605 }
     ];
 
     // Application State
@@ -636,93 +636,79 @@
       const rows = csvText.split(/\r?\n/).map(line => splitCSVLine(line));
       const divMap = {}; // Deduplicated map: key = `${ticker}_${yr}`
       const sharesMap = {}; // Deduplicated map: key = ticker
+      const avgPriceMap = {}; // Deduplicated map: key = ticker
       let idCounter = 1;
       let txIdCounter = 200;
 
       const tickerMap = {
-        "리얼티인컴": "O", "O": "O",
-        "슈드": "SCHD", "SCHD": "SCHD",
-        "마이크로소프트": "MSFT", "MSFT": "MSFT",
-        "스렛": "SRET", "SRET": "SRET",
-        "디즈니": "DIS", "DIS": "DIS",
-        "미국장기국채": "TLT", "TLT": "TLT",
+        "리얼티인컴": "O", "(O)": "O",
+        "슈드": "SCHD", "(SCHD)": "SCHD",
+        "마이크로소프트": "MSFT", "(MSFT)": "MSFT",
+        "스렛": "SRET", "(SRET)": "SRET",
+        "디즈니": "DIS", "(DIS)": "DIS",
+        "미국장기국채": "TLT", "(TLT)": "TLT",
         "JEPQ": "JEPQ", "나스닥100": "JEPQ"
       };
 
       let yearColIndices = {};
-      let avgPriceColIdx = -1;
-      let sharesColIdx = -1;
+      let gubunColIdx = -1;
       let lastMatchedTicker = null;
+      let isTotalBlock = false;
 
       rows.forEach(row => {
-        const rowJoined = row.join(' ').toUpperCase();
-
-        // 1. 헤더 행 탐색 (2021~2026 연도 열 및 매입가/수량 열 찾기)
+        // 1. 헤더 행 탐색 ('구분' 열 및 '2021'~'2026' 연도 열 찾기)
         row.forEach((cell, idx) => {
           const cleanCell = cell.trim();
+          if (cleanCell === '구분') {
+            gubunColIdx = idx;
+            isTotalBlock = false; // 새로운 표 블록 시작 시 TOTAL 플래그 해제
+          }
           years.forEach(yr => {
             if (cleanCell === String(yr) || cleanCell === `${yr}년`) {
               yearColIndices[yr] = idx;
             }
           });
-          if (cleanCell.includes('매입가') || cleanCell.includes('평단가') || cleanCell.includes('평균단가') || cleanCell.includes('매수단가')) {
-            avgPriceColIdx = idx;
-          }
-          if (cleanCell === '수량' || cleanCell.includes('보유수량') || cleanCell.includes('보유주수') || cleanCell.includes('총수량')) {
-            sharesColIdx = idx;
-          }
         });
 
-        // 2. TOTAL / 합계 / 소계 행은 중복 합산 방지를 위해 무조건 건너뛰기
-        if (rowJoined.includes('TOTAL') || rowJoined.includes('합계') || rowJoined.includes('소계') || rowJoined.includes('누계')) {
+        // 구분 열이 탐지되지 않았으면 기본 B열(인덱스 1) 사용
+        const categoryIdx = gubunColIdx !== -1 ? gubunColIdx : 1;
+        const tickerCol = (row[categoryIdx - 1] || row[0] || "").trim();
+        const categoryCol = (row[categoryIdx] || "").trim();
+
+        // 2. TOTAL 블록 진입 시 건너뛰기 (다음 종목명이나 헤더가 나올 때까지 무시)
+        if (tickerCol.toUpperCase().includes('TOTAL')) {
+          isTotalBlock = true;
+          lastMatchedTicker = null;
           return;
         }
 
-        // 3. 종목 매칭 확인 (첫 번째 또는 두 번째 열)
-        const firstCol = row[0] || "";
-        const secondCol = row[1] || "";
-        let matchedTicker = null;
-
-        for (const [key, tk] of Object.entries(tickerMap)) {
-          if (firstCol === key || firstCol.includes(key) || secondCol === key || secondCol.includes(key)) {
-            matchedTicker = tk;
-            lastMatchedTicker = tk;
-            break;
+        // 3. 종목명 매칭 확인 (병합 셀의 경우 첫 번째 행에만 종목명이 있고 아래 행들은 비어 있음)
+        if (tickerCol !== "") {
+          let matched = null;
+          for (const [key, tk] of Object.entries(tickerMap)) {
+            if (tickerCol.includes(key)) {
+              matched = tk;
+              break;
+            }
+          }
+          if (matched) {
+            lastMatchedTicker = matched;
+            isTotalBlock = false;
+          } else {
+            lastMatchedTicker = null;
           }
         }
 
-        // 병합된 셀(첫 번째 열이 비어있고 두 번째 열에 '배당' 등이 적힌 경우) 처리
-        const activeTicker = matchedTicker || (firstCol === "" ? lastMatchedTicker : null);
-        if (!activeTicker) return;
+        if (isTotalBlock || !lastMatchedTicker) return;
+        const activeTicker = lastMatchedTicker;
 
-        // 4. 매입가 열 파싱
-        if (avgPriceColIdx !== -1 && row[avgPriceColIdx]) {
-          const parsedAvg = parseFloat(row[avgPriceColIdx].replace(/[^0-9.-]+/g, ""));
-          if (!isNaN(parsedAvg) && parsedAvg > 0) {
-            liveStockData[activeTicker].avgPrice = parsedAvg;
-            stockMeta[activeTicker].avgPrice = parsedAvg;
-          }
-        }
-
-        // 5. 보유 수량 열 파싱
-        if (sharesColIdx !== -1 && row[sharesColIdx]) {
-          const parsedShares = parseFloat(row[sharesColIdx].replace(/[^0-9.-]+/g, ""));
-          if (!isNaN(parsedShares) && parsedShares >= 0) {
-            sharesMap[activeTicker] = parsedShares;
-          }
-        }
-
-        // 6. 연도별 배당금 파싱 (수량/매입가/원금 행이 아닌 경우에만 배당금으로 인식)
-        const rowLabelText = `${firstCol} ${secondCol}`;
-        const isNonDividendRow = rowLabelText.includes('수량') || rowLabelText.includes('주수') || rowLabelText.includes('매입') || rowLabelText.includes('평단') || rowLabelText.includes('원금') || rowLabelText.includes('평가');
-
-        if (!isNonDividendRow && Object.keys(yearColIndices).length > 0) {
+        // 4. '배당금($)' 행만 정확히 추출 ('누적배당금($)' 행은 건너뛰어 중복 덮어쓰기 방지)
+        if (categoryCol === '배당금($)' || categoryCol === '배당금') {
           years.forEach(yr => {
             const colIdx = yearColIndices[yr];
-            if (colIdx !== undefined && row[colIdx] !== undefined && row[colIdx] !== '') {
+            if (colIdx !== undefined && row[colIdx] !== undefined && row[colIdx] !== '' && row[colIdx] !== '-') {
               const numVal = parseFloat(row[colIdx].replace(/[^0-9.-]+/g, ""));
               if (!isNaN(numVal) && numVal >= 0) {
-                // 동일 종목/연도는 덮어쓰기하여 중복 합산 원천 차단
                 divMap[`${activeTicker}_${yr}`] = {
                   id: idCounter++,
                   date: `${yr}-12-31`,
@@ -732,6 +718,34 @@
               }
             }
           });
+        }
+
+        // 5. '보유수량' 행 파싱 (가장 마지막 연도 열의 최신 보유수량 추출)
+        if (categoryCol === '보유수량') {
+          const sortedYears = Object.keys(yearColIndices).map(Number).sort((a, b) => b - a);
+          for (const yr of sortedYears) {
+            const valStr = row[yearColIndices[yr]];
+            if (valStr && valStr !== '-') {
+              const parsedShares = parseFloat(valStr.replace(/[^0-9.-]+/g, ""));
+              if (!isNaN(parsedShares) && parsedShares >= 0) {
+                sharesMap[activeTicker] = parsedShares;
+                break;
+              }
+            }
+          }
+        }
+
+        // 6. '매입가' 행 파싱 (구분 열 바로 오른쪽 값 추출)
+        if (categoryCol === '매입가') {
+          const valStr = row[categoryIdx + 1];
+          if (valStr && valStr !== '-') {
+            const parsedAvg = parseFloat(valStr.replace(/[^0-9.-]+/g, ""));
+            if (!isNaN(parsedAvg) && parsedAvg > 0) {
+              avgPriceMap[activeTicker] = parsedAvg;
+              liveStockData[activeTicker].avgPrice = parsedAvg;
+              stockMeta[activeTicker].avgPrice = parsedAvg;
+            }
+          }
         }
       });
 
@@ -747,13 +761,7 @@
           ticker: tk,
           type: "BUY",
           shares: sh,
-          price: liveStockData[tk]?.avgPrice || 0
-        }));
-      } else {
-        // 수량 열이 없으면 기존 거래 내역의 매입가만 시트 기준으로 업데이트
-        transactionLogs = transactionLogs.map(t => ({
-          ...t,
-          price: liveStockData[t.ticker]?.avgPrice || t.price
+          price: avgPriceMap[tk] || liveStockData[tk]?.avgPrice || 0
         }));
       }
     }

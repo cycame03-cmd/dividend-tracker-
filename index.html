@@ -52,7 +52,7 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <button type="button" onclick="syncFromGoogleSheet(localStorage.getItem('googleSheetCsvUrl') || DEFAULT_SHEET_URL)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition">
+        <button type="button" onclick="syncFromGoogleSheet(localStorage.getItem('googleSheetCsvUrl') || DEFAULT_SHEET_URL, false, true)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition">
           <span>⚡</span> 시트 즉시 동기화
         </button>
         <button type="button" onclick="openSheetModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
@@ -390,11 +390,11 @@
         <button type="button" onclick="closeSheetModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
       </div>
       <p class="text-xs text-slate-600 leading-relaxed">
-        구글 시트 주소를 입력하면 <strong>Summary</strong> 시트와 <strong>2026년 상세 일지</strong> 시트의 배당금·매입가·월별 보유수량을 자동으로 불러옵니다.
+        구글 시트 주소를 입력하면 <strong>Summary</strong> 시트와 <strong>2026년 상세 일지</strong> 시트의 배당금·매입가·월별 보유수량을 실시간으로 불러옵니다.
       </p>
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">구글 시트 CSV 주소</label>
-        <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/.../gviz/tq?tqx=out:csv" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono" />
+        <label class="block text-xs font-bold text-slate-700 mb-1">구글 시트 주소</label>
+        <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-mono" />
       </div>
       <div class="flex items-center justify-end gap-2 pt-2">
         <button type="button" onclick="closeSheetModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">취소</button>
@@ -1012,8 +1012,9 @@
 
       if (currentVal && monthlySnapshots[currentVal]) {
         select.value = currentVal;
-      } else if (monthlySnapshots['2026-01']) {
-        select.value = '2026-01';
+      } else if (keys.length > 0) {
+        const nowKey = `2026-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        select.value = monthlySnapshots[nowKey] ? nowKey : keys[keys.length - 1];
       }
     }
 
@@ -1311,7 +1312,7 @@
       }
       localStorage.setItem('googleSheetCsvUrl', url);
       closeSheetModal();
-      syncFromGoogleSheet(url);
+      syncFromGoogleSheet(url, false, true);
     }
 
     function splitCSVLine(line) {
@@ -1333,35 +1334,76 @@
       return result;
     }
 
-    function buildFreshCsvUrl(rawUrl, sheetName) {
+    async function fetchSheetCsvRealtime(rawUrl, sheetName = null) {
       const sheetIdMatch = rawUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-      const bust = Date.now();
+      const bust = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
       if (sheetIdMatch) {
         const sheetId = sheetIdMatch[1];
-        const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&_t=${bust}`;
-        return sheetName ? `${base}&sheet=${encodeURIComponent(sheetName)}` : base;
+        const candidateUrls = [];
+
+        if (!sheetName) {
+          candidateUrls.push(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0&nocache=${bust}`);
+          candidateUrls.push(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&nocache=${bust}`);
+        } else {
+          candidateUrls.push(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&nocache=${bust}`);
+        }
+
+        for (const directUrl of candidateUrls) {
+          try {
+            const res = await fetch(directUrl, { cache: 'no-store' });
+            if (res.ok) {
+              const text = await res.text();
+              if (text && !text.trim().startsWith('<!DOCTYPE html')) {
+                return text;
+              }
+            }
+          } catch (e) {
+            // Try CORS proxy fallback below
+          }
+
+          try {
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
+            const pRes = await fetch(proxyUrl, { cache: 'no-store' });
+            if (pRes.ok) {
+              const pText = await pRes.text();
+              if (pText && !pText.trim().startsWith('<!DOCTYPE html')) {
+                return pText;
+              }
+            }
+          } catch (e) {
+            // Continue to next candidate
+          }
+        }
       }
+
       const sep = rawUrl.includes('?') ? '&' : '?';
-      return `${rawUrl}${sep}_t=${bust}`;
+      const fallbackRes = await fetch(`${rawUrl}${sep}nocache=${bust}`, { cache: 'no-store' });
+      if (!fallbackRes.ok) throw new Error("Failed to fetch sheet CSV");
+      return await fallbackRes.text();
     }
 
-    async function syncFromGoogleSheet(url, silent = false) {
+    async function syncFromGoogleSheet(url, silent = false, forceReset = false) {
       if (!url) return;
       try {
-        if (!silent) showToast("구글 시트(Summary & 2026년 상세 일지) 동기화 중...");
-        const summaryFetchUrl = buildFreshCsvUrl(url, null);
-        const response = await fetch(summaryFetchUrl, { cache: 'no-store' });
-        if (!response.ok) throw new Error("Network response was not ok");
-        const csvText = await response.text();
+        if (!silent) showToast("구글 시트 최신 데이터(무캐시) 불러오는 중...");
+        if (forceReset) {
+          localStorage.removeItem('liveStockData');
+          localStorage.removeItem('annualDividends');
+          localStorage.removeItem('monthlyPortfolioSnapshots');
+          liveStockData = JSON.parse(JSON.stringify(stockMeta));
+          annualDividends = JSON.parse(JSON.stringify(defaultAnnualDividends));
+          monthlySnapshots = JSON.parse(JSON.stringify(defaultMonthlySnapshots));
+        }
+
+        const csvText = await fetchSheetCsvRealtime(url, null);
         parseSummarySheetCSV(csvText);
 
         const sheetIdMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
         if (sheetIdMatch) {
-          const detailUrl = buildFreshCsvUrl(url, '2026년 상세 일지');
           try {
-            const detailRes = await fetch(detailUrl, { cache: 'no-store' });
-            if (detailRes.ok) {
-              const detailCsv = await detailRes.text();
+            const detailCsv = await fetchSheetCsvRealtime(url, '2026년 상세 일지');
+            if (detailCsv) {
               parse2026DetailSheetCSV(detailCsv);
             }
           } catch (e) {
@@ -1376,8 +1418,8 @@
         updateStockAnalysisChart();
         syncSimulatorDefaultsFromPortfolio();
         runSimulator();
-        document.getElementById('lastSyncLabel').textContent = `시트 동기화 완료: ${new Date().toLocaleTimeString('ko-KR')}`;
-        if (!silent) showToast("Summary & 2026년 상세 일지 최신 숫자 반영 완료!");
+        document.getElementById('lastSyncLabel').textContent = `시트 실시간 반영 완료: ${new Date().toLocaleTimeString('ko-KR')}`;
+        if (!silent) showToast("방금 수정한 구글 시트 보유수량·데이터가 반영되었습니다!");
       } catch (err) {
         console.error("Sheet sync error:", err);
         if (!silent) showToast("시트 연동 실패: 공유 권한(링크 있는 모든 사용자)을 확인하세요.");
@@ -1577,18 +1619,22 @@
           });
         }
 
-        if (catCell === '누적배당금($)' || catCell === '누적배당금') {
+        if (catCell === '배당금($)' || catCell === '배당금') {
           const sortedMonths = Object.keys(monthCols).map(Number).sort((a, b) => a - b);
-          let lastCum = null;
+          let sum2026 = 0;
+          let hasAny = false;
           sortedMonths.forEach(m => {
             const raw = row[monthCols[m]];
             if (raw !== undefined && raw !== '' && raw !== '-') {
               const val = parseFloat(raw.replace(/[^0-9.-]+/g, ''));
-              if (!isNaN(val) && val > 0) lastCum = val;
+              if (!isNaN(val)) {
+                sum2026 += val;
+                hasAny = true;
+              }
             }
           });
-          if (lastCum !== null) {
-            annualDividends[activeTicker][2026] = lastCum;
+          if (hasAny) {
+            annualDividends[activeTicker][2026] = Number(sum2026.toFixed(2));
           }
         }
       });
@@ -1652,7 +1698,7 @@
 
       const savedUrl = localStorage.getItem('googleSheetCsvUrl') || DEFAULT_SHEET_URL;
       if (savedUrl) {
-        syncFromGoogleSheet(savedUrl, true);
+        syncFromGoogleSheet(savedUrl, true, false);
       }
     });
   </script>

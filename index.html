@@ -52,11 +52,14 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <button type="button" onclick="syncFromGoogleSheet(localStorage.getItem('googleSheetCsvUrl') || DEFAULT_SHEET_URL)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition">
+          <span>⚡</span> 시트 즉시 동기화
+        </button>
         <button type="button" onclick="openSheetModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
-          <span>📊</span> 구글 시트 연동
+          <span>⚙️</span> 시트 설정
         </button>
         <button type="button" onclick="refreshLivePrices()" id="refreshBtn" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition">
-          <span>🔄</span> 실시간 시세 갱신
+          <span>🔄</span> 실시간 시세
         </button>
       </div>
     </div>
@@ -1330,21 +1333,33 @@
       return result;
     }
 
-    async function syncFromGoogleSheet(url) {
+    function buildFreshCsvUrl(rawUrl, sheetName) {
+      const sheetIdMatch = rawUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      const bust = Date.now();
+      if (sheetIdMatch) {
+        const sheetId = sheetIdMatch[1];
+        const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&_t=${bust}`;
+        return sheetName ? `${base}&sheet=${encodeURIComponent(sheetName)}` : base;
+      }
+      const sep = rawUrl.includes('?') ? '&' : '?';
+      return `${rawUrl}${sep}_t=${bust}`;
+    }
+
+    async function syncFromGoogleSheet(url, silent = false) {
       if (!url) return;
       try {
-        showToast("구글 시트(Summary & 2026년 상세 일지) 동기화 중...");
-        const response = await fetch(url);
+        if (!silent) showToast("구글 시트(Summary & 2026년 상세 일지) 동기화 중...");
+        const summaryFetchUrl = buildFreshCsvUrl(url, null);
+        const response = await fetch(summaryFetchUrl, { cache: 'no-store' });
         if (!response.ok) throw new Error("Network response was not ok");
         const csvText = await response.text();
         parseSummarySheetCSV(csvText);
 
         const sheetIdMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
         if (sheetIdMatch) {
-          const sheetId = sheetIdMatch[1];
-          const detailUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('2026년 상세 일지')}`;
+          const detailUrl = buildFreshCsvUrl(url, '2026년 상세 일지');
           try {
-            const detailRes = await fetch(detailUrl);
+            const detailRes = await fetch(detailUrl, { cache: 'no-store' });
             if (detailRes.ok) {
               const detailCsv = await detailRes.text();
               parse2026DetailSheetCSV(detailCsv);
@@ -1362,11 +1377,24 @@
         syncSimulatorDefaultsFromPortfolio();
         runSimulator();
         document.getElementById('lastSyncLabel').textContent = `시트 동기화 완료: ${new Date().toLocaleTimeString('ko-KR')}`;
-        showToast("Summary & 2026년 상세 일지 동기화 완료!");
+        if (!silent) showToast("Summary & 2026년 상세 일지 최신 숫자 반영 완료!");
       } catch (err) {
         console.error("Sheet sync error:", err);
-        showToast("시트 연동 실패: 공유 권한(링크 있는 모든 사용자)을 확인하세요.");
+        if (!silent) showToast("시트 연동 실패: 공유 권한(링크 있는 모든 사용자)을 확인하세요.");
       }
+    }
+
+    function extractFirstNumericCell(row, startIdx) {
+      for (let i = startIdx; i < row.length; i++) {
+        const raw = (row[i] || '').trim();
+        if (raw && raw !== '-') {
+          const cleaned = raw.replace(/[^0-9.-]+/g, '');
+          if (cleaned !== '' && !isNaN(Number(cleaned))) {
+            return Number(cleaned);
+          }
+        }
+      }
+      return null;
     }
 
     function parseSummarySheetCSV(csvText) {
@@ -1391,14 +1419,14 @@
           const c = cell.trim();
           if (c === '구분') gubunIdx = idx;
           if (/^202[1-9]$/.test(c)) yearCols[Number(c)] = idx;
-          if (c === '환율' && row[idx + 2]) {
-            const parsedFx = parseFloat(row[idx + 2].replace(/[^0-9.]/g, ''));
-            if (parsedFx > 800) FX_RATE = parsedFx;
+          if (c === '환율') {
+            const parsedFx = extractFirstNumericCell(row, idx + 1);
+            if (parsedFx && parsedFx > 800) FX_RATE = parsedFx;
           }
         });
 
         const nameCell = (row[gubunIdx - 1] || row[0] || '').trim();
-        const catCell = (row[gubunIdx] || '').trim();
+        const catCell = (row[gubunIdx] || '').replace(/\s+/g, '').trim();
 
         if (nameCell.toUpperCase().includes('TOTAL')) {
           isTotalRow = true;
@@ -1424,7 +1452,7 @@
 
         if (isTotalRow || !activeTicker) return;
 
-        if (catCell === '배당금($)') {
+        if (catCell === '배당금($)' || catCell === '배당금') {
           Object.entries(yearCols).forEach(([yr, cIdx]) => {
             const raw = row[cIdx];
             if (raw !== undefined && raw !== '' && raw !== '-') {
@@ -1436,18 +1464,27 @@
           });
         }
 
-        if (catCell === '매입가') {
-          const priceRaw = row[gubunIdx + 1];
-          if (priceRaw) {
-            const p = parseFloat(priceRaw.replace(/[^0-9.-]+/g, ''));
-            if (!isNaN(p) && p > 0) liveStockData[activeTicker].avgPrice = p;
+        if (catCell === '매입가' || catCell === '매입가($)' || catCell === '평균매입가') {
+          const p = extractFirstNumericCell(row, gubunIdx + 1);
+          if (p !== null && p > 0) {
+            liveStockData[activeTicker].avgPrice = p;
+            if (!liveStockData[activeTicker].currentPrice) {
+              liveStockData[activeTicker].currentPrice = p;
+            }
           }
         }
-        if (catCell === '보유수량' && Object.keys(yearCols).length === 0) {
-          const shRaw = row[gubunIdx + 1];
-          if (shRaw) {
-            const sh = parseFloat(shRaw.replace(/[^0-9.-]+/g, ''));
-            if (!isNaN(sh) && sh >= 0) liveStockData[activeTicker].shares = sh;
+
+        if (catCell === '보유수량' || catCell === '수량') {
+          const sh = extractFirstNumericCell(row, gubunIdx + 1);
+          if (sh !== null && sh >= 0) {
+            liveStockData[activeTicker].shares = sh;
+          }
+        }
+
+        if (catCell === '주당배당금' || catCell === '연배당금' || catCell === '주당연배당금') {
+          const dps = extractFirstNumericCell(row, gubunIdx + 1);
+          if (dps !== null && dps > 0) {
+            liveStockData[activeTicker].annualDivPerShare = dps;
           }
         }
       });
@@ -1472,6 +1509,7 @@
       let gubunIdx = 1;
       let activeTicker = null;
       let isTotalBlock = false;
+      const latestMonthShares = {};
 
       rows.forEach(row => {
         row.forEach((cell, idx) => {
@@ -1486,7 +1524,7 @@
         });
 
         const nameCell = (row[gubunIdx - 1] || row[0] || '').trim();
-        const catCell = (row[gubunIdx] || '').trim();
+        const catCell = (row[gubunIdx] || '').replace(/\s+/g, '').trim();
 
         if (nameCell.toUpperCase().includes('TOTAL')) {
           isTotalBlock = true;
@@ -1513,12 +1551,14 @@
         if (isTotalBlock || !activeTicker) return;
 
         if (catCell === '보유수량') {
-          Object.entries(monthCols).forEach(([mStr, cIdx]) => {
-            const m = Number(mStr);
+          const sortedMonths = Object.keys(monthCols).map(Number).sort((a, b) => a - b);
+          sortedMonths.forEach(m => {
+            const cIdx = monthCols[m];
             const raw = row[cIdx];
             if (raw !== undefined && raw !== '' && raw !== '-') {
               const sh = parseFloat(raw.replace(/[^0-9.-]+/g, ''));
               if (!isNaN(sh) && sh >= 0) {
+                latestMonthShares[activeTicker] = sh;
                 const snapKey = `2026-${String(m).padStart(2, '0')}`;
                 if (!monthlySnapshots[snapKey]) {
                   monthlySnapshots[snapKey] = {
@@ -1530,14 +1570,37 @@
                 monthlySnapshots[snapKey].holdings[activeTicker] = {
                   shares: sh,
                   avgPrice: liveStockData[activeTicker]?.avgPrice || stockMeta[activeTicker].avgPrice,
-                  annualDivPerShare: stockMeta[activeTicker].annualDivPerShare
+                  annualDivPerShare: liveStockData[activeTicker]?.annualDivPerShare || stockMeta[activeTicker].annualDivPerShare
                 };
               }
             }
           });
         }
+
+        if (catCell === '누적배당금($)' || catCell === '누적배당금') {
+          const sortedMonths = Object.keys(monthCols).map(Number).sort((a, b) => a - b);
+          let lastCum = null;
+          sortedMonths.forEach(m => {
+            const raw = row[monthCols[m]];
+            if (raw !== undefined && raw !== '' && raw !== '-') {
+              const val = parseFloat(raw.replace(/[^0-9.-]+/g, ''));
+              if (!isNaN(val) && val > 0) lastCum = val;
+            }
+          });
+          if (lastCum !== null) {
+            annualDividends[activeTicker][2026] = lastCum;
+          }
+        }
       });
 
+      Object.entries(latestMonthShares).forEach(([tk, sh]) => {
+        if (liveStockData[tk]) {
+          liveStockData[tk].shares = sh;
+        }
+      });
+
+      localStorage.setItem('liveStockData', JSON.stringify(liveStockData));
+      localStorage.setItem('annualDividends', JSON.stringify(annualDividends));
       localStorage.setItem('monthlyPortfolioSnapshots', JSON.stringify(monthlySnapshots));
     }
 
@@ -1586,6 +1649,11 @@
       updateDashboard();
       renderMonthlyReport();
       syncSimulatorDefaultsFromPortfolio();
+
+      const savedUrl = localStorage.getItem('googleSheetCsvUrl') || DEFAULT_SHEET_URL;
+      if (savedUrl) {
+        syncFromGoogleSheet(savedUrl, true);
+      }
     });
   </script>
 </body>

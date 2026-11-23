@@ -96,21 +96,21 @@
             <span class="text-xs font-semibold text-slate-500">총 수령 배당금</span>
             <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">세후 누적 ($)</span>
           </div>
-          <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" id="kpiTotalDiv">$1,331.32</div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" id="kpiTotalDiv">$1,469.25</div>
           <div class="mt-2 text-xs text-slate-500 flex items-center justify-between">
-            <span id="kpiTotalDivKrw">약 ₩1,930,414</span>
-            <span class="text-emerald-600 font-semibold" id="kpiThisYearDiv">2026년: $269.77</span>
+            <span id="kpiTotalDivKrw">약 ₩2,130,413</span>
+            <span class="text-emerald-600 font-semibold" id="kpiThisYearDiv">2026년: $407.70</span>
           </div>
         </div>
 
         <div class="card p-5 relative overflow-hidden">
           <div class="flex items-center justify-between mb-1">
             <span class="text-xs font-semibold text-slate-500">총 매수 원금 (투자금)</span>
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700" id="kpiValuationBadge">평가: $13,153.79</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700" id="kpiValuationBadge">평가: $13,283.20</span>
           </div>
-          <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" id="kpiTotalPrincipal">$13,153.79</div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" id="kpiTotalPrincipal">$13,283.20</div>
           <div class="mt-2 text-xs text-slate-500 flex items-center justify-between">
-            <span id="kpiTotalPrincipalKrw">약 ₩19,072,996</span>
+            <span id="kpiTotalPrincipalKrw">약 ₩19,260,640</span>
             <span class="font-semibold" id="kpiTotalReturnRate">수익률 +0.00%</span>
           </div>
         </div>
@@ -122,8 +122,8 @@
           </div>
           <div class="text-2xl sm:text-3xl font-extrabold text-indigo-600 tracking-tight" id="kpiYocRate">3.92%</div>
           <div class="mt-2 text-xs text-slate-500 flex items-center justify-between">
-            <span id="kpiExpectedAnnualDiv">예상 연 배당: $515.77</span>
-            <span class="text-indigo-600 font-semibold" id="kpiExpectedMonthlyDiv">월 평균: $42.98</span>
+            <span id="kpiExpectedAnnualDiv">예상 연 배당: $520.30</span>
+            <span class="text-indigo-600 font-semibold" id="kpiExpectedMonthlyDiv">월 평균: $43.36</span>
           </div>
         </div>
       </div>
@@ -179,8 +179,13 @@
         </div>
         <div class="card p-5">
           <div class="text-xs font-semibold text-slate-500 mb-1">예상 연 배당금 (세후)</div>
-          <div class="text-2xl sm:text-3xl font-extrabold text-slate-900" id="kpiAnnualExpectedTab">$515.77</div>
-          <div class="mt-1.5 text-xs text-slate-500" id="kpiAnnualExpectedTabKrw">약 ₩747,873</div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-slate-900" id="kpiAnnualExpectedTab">$520.30</div>
+          <div class="mt-1.5 text-xs text-slate-500" id="kpiAnnualExpectedTabKrw">약 ₩754,435</div>
+        </div>
+        <div class="card p-5">
+          <div class="text-xs font-semibold text-slate-500 mb-1">월 평균 예상 배당금</div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-blue-600" id="kpiMonthlyAvgTab">$43.36</div>
+          <div class="mt-1.5 text-xs text-slate-500" id="kpiMonthlyAvgTabKrw">약 ₩62,870</div>
         </div>
         <div class="card p-5">
           <div class="text-xs font-semibold text-slate-500 mb-1">월 평균 예상 배당금</div>
@@ -329,7 +334,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">초기자본금 (원)</label>
-            <input type="number" id="simInitialCapital" value="19072996" step="100000" min="0" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold" />
+            <input type="number" id="simInitialCapital" value="19260640" step="100000" min="0" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">월 추가 투자금 (원)</label>
@@ -409,8 +414,17 @@
   </div>
 
   <script>
+    const APP_DATA_VERSION = "2026.11.v2";
     const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/18fSe_y2dORjmWYiVk9H6XMMl8kd79RadqgchUptP4Ag/gviz/tq?tqx=out:csv";
     let FX_RATE = 1450;
+
+    if (localStorage.getItem('appDataVersion') !== APP_DATA_VERSION) {
+      localStorage.removeItem('liveStockData');
+      localStorage.removeItem('annualDividends');
+      localStorage.removeItem('cumulativeDividends');
+      localStorage.removeItem('summaryTotals');
+      localStorage.setItem('appDataVersion', APP_DATA_VERSION);
+    }
 
     const stockMeta = {
       "O": {
@@ -418,9 +432,9 @@
         ticker: "O",
         cycle: "월배당",
         payMonths: [1,2,3,4,5,6,7,8,9,10,11,12],
-        shares: 76,
-        avgPrice: 62.14,
-        currentPrice: 62.14,
+        shares: 77,
+        avgPrice: 62.0416,
+        currentPrice: 62.0416,
         annualDivPerShare: 2.754
       },
       "SCHD": {
@@ -428,9 +442,9 @@
         ticker: "SCHD",
         cycle: "분기배당",
         payMonths: [3,6,9,12],
-        shares: 123,
-        avgPrice: 27.8695,
-        currentPrice: 27.8695,
+        shares: 125,
+        avgPrice: 28.0042,
+        currentPrice: 28.0042,
         annualDivPerShare: 0.88536
       },
       "MSFT": {
@@ -479,30 +493,30 @@
         cycle: "월배당",
         payMonths: [1,2,3,4,5,6,7,8,9,10,11,12],
         shares: 10,
-        avgPrice: 57.8605,
-        currentPrice: 57.8605,
-        annualDivPerShare: 5.292
+        avgPrice: 58.0865,
+        currentPrice: 58.0865,
+        annualDivPerShare: 5.202
       }
     };
 
     const defaultAnnualDividends = {
-      "O":    { 2021: 26.89, 2022: 110.97, 2023: 115.20, 2024: 172.17, 2025: 192.07, 2026: 121.35 },
-      "SCHD": { 2021: 0,     2022: 1.13,   2023: 5.77,   2024: 12.67,  2025: 31.43,  2026: 45.19 },
-      "MSFT": { 2021: 1.97,  2022: 2.17,   2023: 2.38,   2024: 2.63,   2025: 2.90,   2026: 1.54 },
-      "SRET": { 2021: 24.93, 2022: 80.40,  2023: 80.99,  2024: 87.23,  2025: 89.05,  2026: 63.23 },
+      "O":    { 2021: 26.89, 2022: 110.97, 2023: 115.20, 2024: 172.17, 2025: 192.07, 2026: 191.67 },
+      "SCHD": { 2021: 0,     2022: 1.13,   2023: 5.77,   2024: 12.67,  2025: 31.43,  2026: 73.05 },
+      "MSFT": { 2021: 1.97,  2022: 2.17,   2023: 2.38,   2024: 2.63,   2025: 2.90,   2026: 2.31 },
+      "SRET": { 2021: 24.93, 2022: 80.40,  2023: 80.99,  2024: 87.23,  2025: 89.05,  2026: 91.55 },
       "DIS":  { 2021: 0,     2022: 0,      2023: 0,      2024: 7.39,   2025: 10.20,  2026: 15.30 },
-      "TLT":  { 2021: 0,     2022: 0,      2023: 0,      2024: 0,      2025: 1.01,   2026: 23.16 },
-      "JEPQ": { 2021: 0,     2022: 0,      2023: 0,      2024: 0,      2025: 0,      2026: 29.38 }
+      "TLT":  { 2021: 0,     2022: 0,      2023: 0,      2024: 0,      2025: 1.01,   2026: 33.82 },
+      "JEPQ": { 2021: 0,     2022: 0,      2023: 0,      2024: 0,      2025: 0,      2026: 44.59 }
     };
 
     const defaultCumulativeDividends = {
-      "O": 791.20,
-      "SCHD": 115.56,
+      "O": 808.97,
+      "SCHD": 124.05,
       "MSFT": 14.36,
-      "SRET": 444.71,
+      "SRET": 454.15,
       "DIS": 32.89,
-      "TLT": 31.06,
-      "JEPQ": 43.01
+      "TLT": 34.83,
+      "JEPQ": 44.59
     };
 
     const defaultMonthlySnapshots = {
@@ -1493,34 +1507,34 @@
       };
 
       let yearCols = {};
-      let gubunIdx = 1;
       let activeTicker = null;
-      let isTotalRow = false;
+      let parsingTable2 = false;
 
       rows.forEach((row) => {
         row.forEach((cell, idx) => {
           const c = cell.trim();
-          if (c === '구분') gubunIdx = idx;
           if (/^202[1-9]$/.test(c)) yearCols[Number(c)] = idx;
           if (c === '환율') {
             const parsedFx = getLastNumericInRange(row, idx + 1, idx + 3);
             if (parsedFx && parsedFx > 800) FX_RATE = parsedFx;
           }
+          if (c === '주당 배당금(세전)' || c === '주당 배당금(세후)') {
+            parsingTable2 = true;
+          }
         });
 
-        const nameCell = (row[gubunIdx - 1] || row[0] || '').trim();
-        const catCell = (row[gubunIdx] || '').replace(/\s+/g, '').trim();
+        const nameCell = (row[0] || '').trim();
+        const catCell = (row[1] || '').replace(/\s+/g, '').trim();
 
         if (nameCell.toUpperCase().includes('TOTAL')) {
-          isTotalRow = true;
-          activeTicker = null;
-        }
-
-        if (isTotalRow) {
-          if (catCell === '누적배당금($)' || catCell === '누적배당금') {
-            const totalCumDiv = getLastNumericInRange(row, 2, 14);
-            if (totalCumDiv !== null) {
-              summaryTotals.totalDivUsd = totalCumDiv;
+          if (!parsingTable2 && (catCell === '누적배당금($)' || catCell === '누적배당금')) {
+            const totalCumDiv = getLastNumericInRange(row, 2, 8);
+            if (totalCumDiv !== null) summaryTotals.totalDivUsd = totalCumDiv;
+          }
+          if (parsingTable2 && catCell.includes('투자금($)')) {
+            const totalInvestUsd = parseFloat((row[2] || '').replace(/[^0-9.-]+/g, ''));
+            if (!isNaN(totalInvestUsd) && totalInvestUsd > 0) {
+              summaryTotals.totalPrincipalUsd = totalInvestUsd;
             }
           }
           return;
@@ -1534,68 +1548,55 @@
               break;
             }
           }
-          if (found) {
-            activeTicker = found;
-            isTotalRow = false;
-          } else {
-            activeTicker = null;
-          }
+          if (found) activeTicker = found;
         }
 
         if (!activeTicker) return;
 
-        if (catCell === '보유수량' || catCell === '수량') {
-          const lastShares = getLastNumericInRange(row, 2, 14);
-          if (lastShares !== null && lastShares >= 0) {
-            liveStockData[activeTicker].shares = lastShares;
+        if (!parsingTable2) {
+          if (catCell === '보유수량' || catCell === '수량') {
+            const lastShares = getLastNumericInRange(row, 2, 8);
+            if (lastShares !== null && lastShares >= 0) {
+              liveStockData[activeTicker].shares = lastShares;
+            }
           }
-        }
 
-        if (catCell === '누적배당금($)' || catCell === '누적배당금') {
-          const lastCumDiv = getLastNumericInRange(row, 2, 14);
-          if (lastCumDiv !== null && lastCumDiv >= 0) {
-            cumulativeDividends[activeTicker] = lastCumDiv;
+          if (catCell === '누적배당금($)' || catCell === '누적배당금') {
+            const lastCumDiv = getLastNumericInRange(row, 2, 8);
+            if (lastCumDiv !== null && lastCumDiv >= 0) {
+              cumulativeDividends[activeTicker] = lastCumDiv;
+            }
           }
-        }
 
-        if (catCell === '배당금($)' || catCell === '배당금') {
-          Object.entries(yearCols).forEach(([yr, cIdx]) => {
-            const raw = row[cIdx];
-            if (raw !== undefined && raw !== '' && raw !== '-') {
-              const num = parseFloat(raw.replace(/[^0-9.-]+/g, ''));
-              if (!isNaN(num)) {
-                annualDividends[activeTicker][Number(yr)] = num;
+          if (catCell === '배당금($)' || catCell === '배당금') {
+            Object.entries(yearCols).forEach(([yr, cIdx]) => {
+              const raw = row[cIdx];
+              if (raw !== undefined && raw !== '' && raw !== '-') {
+                const num = parseFloat(raw.replace(/[^0-9.-]+/g, ''));
+                if (!isNaN(num)) {
+                  annualDividends[activeTicker][Number(yr)] = num;
+                }
+              }
+            });
+          }
+        } else {
+          if (catCell === '보유수량') {
+            const sh = parseFloat((row[2] || '').replace(/[^0-9.-]+/g, ''));
+            const dps = parseFloat((row[6] || '').replace(/[^0-9.-]+/g, ''));
+            if (!isNaN(sh) && sh >= 0) liveStockData[activeTicker].shares = sh;
+            if (!isNaN(dps) && dps > 0) liveStockData[activeTicker].annualDivPerShare = dps;
+          }
+          if (catCell === '매입가') {
+            const price = parseFloat((row[2] || '').replace(/[^0-9.-]+/g, ''));
+            if (!isNaN(price) && price > 0) {
+              liveStockData[activeTicker].avgPrice = price;
+              if (!liveStockData[activeTicker].currentPrice) {
+                liveStockData[activeTicker].currentPrice = price;
               }
             }
-          });
-        }
-
-        if (catCell === '매입가' || catCell === '매입가($)' || catCell === '평균매입가') {
-          const lastPrice = getLastNumericInRange(row, 2, 14);
-          if (lastPrice !== null && lastPrice > 0) {
-            liveStockData[activeTicker].avgPrice = lastPrice;
-            if (!liveStockData[activeTicker].currentPrice) {
-              liveStockData[activeTicker].currentPrice = lastPrice;
-            }
-          }
-        }
-
-        if (catCell === '주당배당금' || catCell === '연배당금' || catCell === '주당연배당금') {
-          const dps = getLastNumericInRange(row, 2, 14);
-          if (dps !== null && dps > 0) {
-            liveStockData[activeTicker].annualDivPerShare = dps;
           }
         }
       });
-
-      const c70Cell = getCellNumeric(rows, 70, 2);
-      if (c70Cell !== null) {
-        if (c70Cell.raw.includes('₩') || c70Cell.value >= 200000) {
-          summaryTotals.totalPrincipalUsd = c70Cell.value / FX_RATE;
-        } else {
-          summaryTotals.totalPrincipalUsd = c70Cell.value;
-        }
-      }
 
       localStorage.setItem('annualDividends', JSON.stringify(annualDividends));
       localStorage.setItem('cumulativeDividends', JSON.stringify(cumulativeDividends));
